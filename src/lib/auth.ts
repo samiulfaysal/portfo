@@ -1,9 +1,6 @@
-import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
-import type { JWT } from "next-auth/jwt";
-import type { Session } from "next-auth";
 import type { AuthOptions } from "next-auth";
 
 export const authOptions: AuthOptions = {
@@ -11,16 +8,18 @@ export const authOptions: AuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        identifier: { label: "Username or email", type: "text" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.identifier || !credentials?.password) {
           return null;
         }
 
         const admin = await prisma.admin.findUnique({
-          where: { email: credentials.email }
+          where: credentials.identifier.includes("@")
+            ? { email: credentials.identifier }
+            : { username: credentials.identifier }
         });
 
         if (!admin) {
@@ -57,21 +56,19 @@ export const authOptions: AuthOptions = {
     signIn: "/admin/signin",
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
       }
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }) {
       if (token && session.user) {
-        (session.user as any).id = token.id as string;
-        (session.user as any).role = token.role as string;
+        session.user.id = token.id;
+        session.user.role = token.role;
       }
       return session;
     }
   }
 };
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);

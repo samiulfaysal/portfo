@@ -4,16 +4,18 @@ import bcrypt from 'bcryptjs';
 async function initDB() {
   try {
     // Create admin user if it doesn't exist
+    const adminUsername = 'aadmin';
     const adminEmail = 'admin@portfolio.com';
     const existingAdmin = await prisma.admin.findUnique({
-      where: { email: adminEmail }
+      where: { username: adminUsername }
     });
 
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+      const hashedPassword = await bcrypt.hash('Faysal25524', 10);
 
       await prisma.admin.create({
         data: {
+          username: adminUsername,
           email: adminEmail,
           password: hashedPassword,
           name: 'Portfolio Admin',
@@ -21,14 +23,26 @@ async function initDB() {
         }
       });
 
-      console.log('✅ Admin user created successfully');
+      console.log('Admin user created successfully');
     } else {
-      console.log('ℹ️ Admin user already exists');
+      const hashedPassword = await bcrypt.hash('Faysal25524', 10);
+
+      await prisma.admin.update({
+        where: { username: adminUsername },
+        data: {
+          email: adminEmail,
+          password: hashedPassword,
+          name: 'Portfolio Admin',
+          role: 'admin',
+        },
+      });
+
+      console.log('Admin user updated successfully');
     }
 
-    console.log('🚀 Database initialization complete');
+    console.log('Database initialization complete');
   } catch (error) {
-    console.error('❌ Error initializing database:', error);
+    console.error('Error initializing database:', error);
     throw error;
   } finally {
     await prisma.$disconnect();

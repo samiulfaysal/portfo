@@ -7,24 +7,28 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 const signInSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  identifier: z.string().min(1, 'Username or email is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 export default function SignInForm() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
   });
 
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
     setIsLoading(true);
+    setFormError(null);
     try {
       const result = await signIn('credentials', {
         redirect: false,
@@ -35,12 +39,11 @@ export default function SignInForm() {
         throw new Error(result.error);
       }
 
-      // Redirect to admin dashboard on successful sign in
-      window.location.href = '/admin/dashboard';
+      router.push('/admin/dashboard');
+      router.refresh();
     } catch (error) {
       console.error('Sign in error:', error);
-      // In a real app, you'd show this error to the user
-      alert('Invalid credentials. Please try again.');
+      setFormError('Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -49,17 +52,18 @@ export default function SignInForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
-          Email Address
+        <label htmlFor="identifier" className="text-sm font-medium text-muted-foreground">
+          Username or Email
         </label>
         <Input
-          {...register("email")}
-          type="email"
-          placeholder="Enter your email"
-          className={errors.email ? "border-destructive" : ""}
+          {...register("identifier")}
+          type="text"
+          placeholder="aadmin"
+          autoComplete="username"
+          className={errors.identifier ? "border-destructive" : ""}
         />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+        {errors.identifier && (
+          <p className="text-sm text-destructive">{errors.identifier.message}</p>
         )}
       </div>
 
@@ -71,12 +75,19 @@ export default function SignInForm() {
           {...register("password")}
           type="password"
           placeholder="Enter your password"
+          autoComplete="current-password"
           className={errors.password ? "border-destructive" : ""}
         />
         {errors.password && (
           <p className="text-sm text-destructive">{errors.password.message}</p>
         )}
       </div>
+
+      {formError && (
+        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {formError}
+        </p>
+      )}
 
       <Button
         type="submit"

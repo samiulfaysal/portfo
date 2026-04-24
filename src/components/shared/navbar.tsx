@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { memo } from "react";
 
-export default function Navbar() {
+const Navbar = memo(function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-dark/50 border-b border-dark/20 px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -35,4 +36,6 @@ export default function Navbar() {
       </div>
     </nav>
   );
-}
+});
+
+export default Navbar;
