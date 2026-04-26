@@ -1,3 +1,4 @@
+import Navbar from "@/components/shared/navbar";
 import Hero from '@/components/sections/hero';
 import Services from '@/components/sections/services';
 import TechStack from '@/components/sections/tech-stack';
@@ -9,6 +10,8 @@ import Footer from '@/components/ui/footer';
 export default function Home() {
   return (
     <main className="bg-[#030303]">
+      {/* 1. The Main Navbar */}
+      <Navbar />
       {/* 1. The 3D Geodesic Hero */}
       <Hero />
 
