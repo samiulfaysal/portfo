@@ -4,10 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
-    "db:init": "ts-node src/lib/init-db.ts"
+    "db:init": "ts-node src/lib/init-db.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:reset": "prisma migrate reset --force",
+    "db:seed": "ts-node src/lib/init-db.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
