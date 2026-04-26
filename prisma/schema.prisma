@@ -25,6 +25,14 @@ model Project {
   @@index([slug])
   @@index([featured])
 }
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique // We will use "hero_content" as the key
+  status    String
+  title     String   @db.Text
+  subtitle  String   @db.Text
+  updatedAt DateTime @updatedAt
+}
 
 model ContactMessage {
   id        String   @id @default(uuid())

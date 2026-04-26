@@ -6,31 +6,24 @@ import Projects from '@/components/sections/projects-showcase';
 import Testimonials from '@/components/sections/testimonials';
 import ContactCTA from '@/components/sections/ContactCTA';
 import Footer from '@/components/ui/footer';
+import { getHeroSettings } from "@/server-actions/settings";
 
-export default function Home() {
+// FIX: Force Next.js to bypass the cache and fetch fresh CMS data every time
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export default async function Home() {
+  const heroContent = await getHeroSettings();
+
   return (
     <main className="bg-[#030303]">
-      {/* 1. The Main Navbar */}
       <Navbar />
-      {/* 1. The 3D Geodesic Hero */}
-      <Hero />
-
-      {/* 2. Your Core Competencies */}
+      <Hero content={heroContent} />
       <Services />
-
-      {/* 3. The Interactive Tech Grid */}
       <TechStack />
-
-      {/* 4. Live Deployment Logs (Projects) */}
       <Projects />
-
-      {/* 5. The 3D Perspective Slider */}
       <Testimonials />
-
-      {/* 6. The Initialization Portal (CTA) */}
       <ContactCTA />
-
-      {/* 7. System Base (Footer) */}
       <Footer />
     </main>
   );

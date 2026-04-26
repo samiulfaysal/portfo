@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { Lock, User, Terminal, ShieldCheck, ArrowRight, Activity } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 // Animation variants for the terminal boot sequence
 const formVariants: Variants = {
@@ -28,17 +30,38 @@ const itemVariants: Variants = {
 export default function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('SYSTEM_READY');
+  
+  // State to capture form inputs
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setStatus('ESTABLISHING_SECURE_LINK...');
     
-    // Logic for authentication goes here
-    setTimeout(() => {
+    try {
+      // Call NextAuth's signIn function
+      const res = await signIn('credentials', {
+        redirect: false,
+        identifier,
+        password,
+      });
+
+      if (res?.error) {
+        setStatus('ACCESS_DENIED: INVALID_CREDENTIALS');
+        setLoading(false);
+      } else if (res?.ok) {
+        setStatus('AUTH_SUCCESS_REDIRECTING...');
+        router.push('/admin/dashboard'); // Redirect to dashboard on success
+        router.refresh();
+      }
+    } catch (error) {
+      setStatus('ERROR: CONNECTION_FAILED');
       setLoading(false);
-      setStatus('ACCESS_DENIED_LOGGED');
-    }, 2000);
+    }
   };
 
   return (
@@ -52,7 +75,7 @@ export default function SignInForm() {
       <div className="relative p-[1px] bg-gradient-to-b from-white/20 via-transparent to-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
         <div className="relative bg-[#050505]/90 backdrop-blur-3xl p-8 md:p-10 rounded-[2.4rem] border border-white/5">
           
-          {/* Header Metadata (Similar to Hero Status) */}
+          {/* Header Metadata */}
           <div className="flex justify-between items-center mb-12">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
@@ -60,10 +83,12 @@ export default function SignInForm() {
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Auth_Node</span>
-                <span className="text-[9px] font-mono text-cyan-500/60 uppercase">{status}</span>
+                <span className={`text-[9px] font-mono uppercase ${status.includes('DENIED') || status.includes('ERROR') ? 'text-red-500' : 'text-cyan-500/60'}`}>
+                  {status}
+                </span>
               </div>
             </div>
-            <Activity size={16} className="text-white/10 animate-pulse" />
+            <Activity size={16} className={`text-white/10 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
           </div>
 
           {/* Form Content */}
@@ -76,8 +101,10 @@ export default function SignInForm() {
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-cyan-400 transition-colors" size={18} />
                 <input 
                   type="text" 
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white font-mono text-sm placeholder:text-white/5 focus:outline-none focus:border-cyan-500/40 focus:bg-white/[0.05] transition-all"
-                  placeholder="USERNAME"
+                  placeholder="USERNAME OR EMAIL"
                   required
                 />
               </div>
@@ -91,6 +118,8 @@ export default function SignInForm() {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-purple-400 transition-colors" size={18} />
                 <input 
                   type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white font-mono text-sm placeholder:text-white/5 focus:outline-none focus:border-purple-500/40 focus:bg-white/[0.05] transition-all"
                   placeholder="••••••••"
                   required
