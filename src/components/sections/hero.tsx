@@ -2,154 +2,178 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Stars, Float } from '@react-three/drei';
+import * as THREE from 'three';
 
-export default function Hero() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.3,
-      },
-    },
-  };
+// --- 3D COMPONENT: The Global Web Node ---
+function WebEarthNode() {
+  const groupRef = useRef<THREE.Group>(null);
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8 },
-    },
-  };
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    
+    // Slow, constant Earth-like rotation
+    groupRef.current.rotation.y += 0.002;
+    groupRef.current.rotation.x += 0.0005;
+    
+    // Smooth mouse tracking (parallax tilt)
+    const targetX = state.pointer.x * 0.5;
+    const targetY = state.pointer.y * 0.5;
+    groupRef.current.rotation.y += (targetX - groupRef.current.rotation.y) * 0.05;
+    groupRef.current.rotation.x += (-targetY - groupRef.current.rotation.x) * 0.05;
+  });
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Animated Mesh Gradient Background */}
-      <div className="absolute inset-0 -z-10">
-        {/* Gradient blob 1 */}
+    <Float speed={2} rotationIntensity={0.5} floatIntensity={1.5}>
+      <group ref={groupRef} scale={1.6}>
+        
+        {/* Layer 1: The Solid Earth Core (Absorbs light to create depth) */}
+        <mesh>
+          <sphereGeometry args={[1, 64, 64]} />
+          <meshStandardMaterial 
+            color="#020617" // Deep space blue/black
+            roughness={0.7}
+            metalness={0.3}
+          />
+        </mesh>
+
+        {/* Layer 2: The Primary Data Web (Geodesic Cyan Network) */}
+        <mesh scale={1.01}>
+          {/* Icosahedron with detail level 4 creates a beautiful global grid */}
+          <icosahedronGeometry args={[1, 4]} />
+          <meshStandardMaterial 
+            color="#06b6d4" 
+            emissive="#06b6d4" 
+            emissiveIntensity={0.8}
+            wireframe={true}
+            transparent
+            opacity={0.35}
+          />
+        </mesh>
+
+        {/* Layer 3: The Outer Orbit Web (Low-poly Purple Network) */}
+        <mesh scale={1.04} rotation={[Math.PI / 4, 0, Math.PI / 6]}>
+          <icosahedronGeometry args={[1, 2]} />
+          <meshStandardMaterial 
+            color="#a855f7" 
+            emissive="#a855f7" 
+            emissiveIntensity={0.6}
+            wireframe={true}
+            transparent
+            opacity={0.2}
+          />
+        </mesh>
+
+      </group>
+    </Float>
+  );
+}
+
+// --- MAIN HERO COMPONENT ---
+export default function Hero() {
+  const [typedText, setTypedText] = useState('');
+  const fullText = '> system.status === "ONLINE"';
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Typewriter effect & mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    let i = 0;
+    const timer = setInterval(() => {
+      setTypedText(fullText.slice(0, i));
+      i++;
+      if (i > fullText.length) clearInterval(timer);
+    }, 80);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, [fullText]);
+
+  return (
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#030303] selection:bg-cyan-500/30">
+      
+      {/* 1. R3F GLOBAL 3D SCENE */}
+      {!isMobile ? (
+        <div className="absolute inset-0 z-0 opacity-90">
+          <Canvas camera={{ position: [0, 0, 5.5], fov: 45 }} dpr={[1, 2]}>
+            <Suspense fallback={null}>
+              <ambientLight intensity={0.1} />
+              <directionalLight position={[10, 10, 5]} intensity={2} color="#06b6d4" />
+              <directionalLight position={[-10, -10, -5]} intensity={1} color="#a855f7" />
+              
+              {/* Shining Stars Background */}
+              <Stars radius={100} depth={50} count={4000} factor={4} saturation={0} fade speed={2} />
+              
+              <WebEarthNode />
+            </Suspense>
+          </Canvas>
+        </div>
+      ) : (
+        // Mobile Performance Fallback
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#030303] via-[#0891b2]/10 to-[#030303]" />
+      )}
+
+      {/* 2. UI OVERLAY */}
+      <div className="relative z-10 px-6 py-12 max-w-7xl mx-auto w-full flex flex-col items-center text-center pointer-events-none">
+        
         <motion.div
-          className="absolute w-96 h-96 bg-blue-600/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, -50, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-          }}
-          style={{ top: '20%', left: '10%' }}
-        />
-        {/* Gradient blob 2 */}
-        <motion.div
-          className="absolute w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"
-          animate={{
-            x: [0, -100, 0],
-            y: [0, 100, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-          }}
-          style={{ top: '40%', right: '10%' }}
-        />
-        {/* Gradient blob 3 */}
-        <motion.div
-          className="absolute w-80 h-80 bg-pink-600/20 rounded-full blur-3xl"
-          animate={{
-            x: [0, 50, -50, 0],
-            y: [0, 100, -50, 0],
-          }}
-          transition={{
-            duration: 30,
-            repeat: Infinity,
-          }}
-          style={{ bottom: '10%', left: '50%', transform: 'translateX(-50%)' }}
-        />
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-center pointer-events-auto mt-12"
+        >
+          {/* Status Badge */}
+          <div className="flex items-center gap-4 mb-8 bg-[#030303]/50 p-2 pr-4 rounded-full backdrop-blur-md border border-white/5">
+            <div className="flex h-2.5 w-2.5 relative ml-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-60"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500 shadow-[0_0_12px_#06b6d4]"></span>
+            </div>
+            <span className="text-cyan-400/90 text-xs font-mono tracking-widest uppercase">
+              {typedText}
+              <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-1.5 h-3 bg-cyan-400 inline-block ml-1 align-middle"/>
+            </span>
+          </div>
+
+          {/* Hero Typography */}
+          <h1 className="text-5xl md:text-7xl lg:text-[7rem] font-bold text-white mb-6 tracking-tighter leading-[1.05] drop-shadow-2xl">
+            Architecting <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-500">
+              The Web.
+            </span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-white/60 leading-relaxed font-light mb-12 max-w-2xl text-center">
+            I am a Full-Stack Web Developer and Systems Architect. I engineer complex infrastructure into beautifully simple, high-performance digital experiences.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-5 items-center">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-300"></div>
+              <Link href="/contact" className="relative flex items-center justify-center px-10 py-4 bg-white text-black font-semibold uppercase tracking-wider text-sm rounded-full transition-all hover:scale-105 active:scale-95">
+                Initialize Sequence
+              </Link>
+            </div>
+            
+            <Link href="/projects" className="group px-8 py-4 border border-white/10 text-white font-mono text-sm uppercase tracking-wider hover:bg-white/5 rounded-full transition-all text-center flex items-center justify-center gap-3 backdrop-blur-md">
+              View Architecture 
+              <motion.span 
+                className="text-cyan-500"
+                animate={{ x: [0, 5, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              >→</motion.span>
+            </Link>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Content */}
-      <motion.div
-        className="relative z-10 px-6 py-12 text-center max-w-4xl"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Subtitle Badge */}
-        <motion.div variants={itemVariants} className="mb-6">
-          <span className="inline-block px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white/80 text-sm font-medium backdrop-blur-sm">
-            ✨ Welcome to My Portfolio
-          </span>
-        </motion.div>
-
-        {/* Main Heading */}
-        <motion.h1
-          variants={itemVariants}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight"
-        >
-          Full-Stack Engineer &{' '}
-          <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Product Builder
-          </span>
-        </motion.h1>
-
-        {/* Subheading */}
-        <motion.p
-          variants={itemVariants}
-          className="text-lg md:text-xl text-white/70 mb-12 leading-relaxed max-w-2xl mx-auto"
-        >
-          Crafting exceptional digital experiences with modern technologies. From concept to deployment, I build scalable, performant, and beautiful applications.
-        </motion.p>
-
-        {/* CTA Buttons */}
-        <motion.div
-          variants={itemVariants}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-        >
-          <Link href="/projects">
-            <motion.button
-              className="px-8 py-4 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold transition-all shadow-lg hover:shadow-blue-500/50"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Explore My Work
-            </motion.button>
-          </Link>
-
-          <Link href="/contact">
-            <motion.button
-              className="px-8 py-4 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold transition-all backdrop-blur-sm"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Get in Touch
-            </motion.button>
-          </Link>
-        </motion.div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          className="mt-20"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <p className="text-white/40 text-sm mb-2">Scroll to explore</p>
-          <svg
-            className="w-6 h-6 mx-auto text-white/40"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 14l-7 7m0 0l-7-7m7 7V3"
-            />
-          </svg>
-        </motion.div>
-      </motion.div>
     </div>
   );
 }

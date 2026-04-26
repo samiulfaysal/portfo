@@ -1,17 +1,34 @@
-import Navbar from "@/components/shared/navbar";
-import Hero from "@/components/sections/hero";
-import ProjectShowcase from "@/components/sections/projects-showcase";
-import TechStack from "@/components/sections/tech-stack";
+import Hero from '@/components/sections/hero';
+import Services from '@/components/sections/services';
+import TechStack from '@/components/sections/tech-stack';
+import Projects from '@/components/sections/projects-showcase';
+import Testimonials from '@/components/sections/testimonials';
+import ContactCTA from '@/components/sections/ContactCTA';
+import Footer from '@/components/ui/footer';
 
 export default function Home() {
   return (
-    <>
-      <Navbar />
-      <main className="bg-gradient-to-br from-dark via-dark to-dark/80 min-h-screen">
-        <Hero />
-        <ProjectShowcase />
-        <TechStack />
-      </main>
-    </>
+    <main className="bg-[#030303]">
+      {/* 1. The 3D Geodesic Hero */}
+      <Hero />
+
+      {/* 2. Your Core Competencies */}
+      <Services />
+
+      {/* 3. The Interactive Tech Grid */}
+      <TechStack />
+
+      {/* 4. Live Deployment Logs (Projects) */}
+      <Projects />
+
+      {/* 5. The 3D Perspective Slider */}
+      <Testimonials />
+
+      {/* 6. The Initialization Portal (CTA) */}
+      <ContactCTA />
+
+      {/* 7. System Base (Footer) */}
+      <Footer />
+    </main>
   );
 }
